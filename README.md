@@ -10,3 +10,9 @@ $ cd listup-google-cloud-projects
 $ chmod 755 listup.sh
 $ ./listup.sh
 ```
+
+なお、環境によってはプロジェクトIDが`sys-`ではじまるApps Script プロジェクトが大量表示されるかもしれませんが、以下のように実行することで除外して表示することができます。（[参考記事](https://developers.google.com/apps-script/guides/cloud-platform-projects)）
+
+```sh
+$ ./listup.sh | grep -v sys
+```
