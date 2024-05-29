@@ -2,18 +2,38 @@
 
 # Declare the associative array to hold folder names
 declare -A folder_names
+declare -A parent_folders
+
+# Function to build the full path of the folder/project
+build_full_path() {
+  local folder_id=$1
+  local path=""
+
+  while [[ -n "$folder_id" ]]; do
+    local folder_name=${folder_names[$folder_id]}
+    if [[ -n "$path" ]]; then
+      path="$folder_name > $path"
+    else
+      path="$folder_name"
+    fi
+    folder_id=${parent_folders[$folder_id]}
+  done
+
+  echo "$path"
+}
 
 # Function to list projects recursively
 list_projects() {
   local parent_folder=$1
-  local parent_folder_name=$2
 
   # List projects under the given folder
   projects=$(gcloud projects list --filter="parent.id=$parent_folder" --format="value(projectId)")
 
   for project in $projects; do
-    # Print the project with parent folder name
-    echo "$parent_folder_name > $project"
+    # Build the full path for the project
+    local path=$(build_full_path "$parent_folder")
+    # Print the project with full path
+    echo "$path > $project"
   done
 
   # List subfolders under the given folder
@@ -22,8 +42,9 @@ list_projects() {
   while IFS=$'\t' read -r folder_id folder_name; do
     if [[ -n "$folder_id" && -n "$folder_name" ]]; then
       folder_names["$folder_id"]="$folder_name"
+      parent_folders["$folder_id"]="$parent_folder"
       # Recursively list projects in subfolders
-      list_projects "$folder_id" "$folder_name"
+      list_projects "$folder_id"
     fi
   done <<< "$subfolders"
 }
@@ -38,8 +59,9 @@ list_folders() {
   while IFS=$'\t' read -r folder_id folder_name; do
     if [[ -n "$folder_id" && -n "$folder_name" ]]; then
       folder_names["$folder_id"]="$folder_name"
+      parent_folders["$folder_id"]=""
       # Recursively list projects in each folder
-      list_projects "$folder_id" "$folder_name"
+      list_projects "$folder_id"
     fi
   done <<< "$folders"
 
