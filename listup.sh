@@ -13,7 +13,7 @@ list_projects() {
 
   for project in $projects; do
     # Print the project with parent folder name
-    echo "Project: $project (Parent Folder: $parent_folder_name)"
+    echo "$parent_folder_name > $project"
   done
 
   # List subfolders under the given folder
@@ -48,7 +48,7 @@ list_folders() {
 
   for project in $projects_without_parent; do
     # Print the project without a parent folder
-    echo "Project: $project (Parent Folder: None)"
+    echo "$project"
   done
 }
 
