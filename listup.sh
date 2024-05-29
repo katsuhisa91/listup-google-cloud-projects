@@ -60,6 +60,7 @@ list_projects() {
 # Function to list all folders under the organization
 list_folders() {
   local organization_id=$1
+  local depth=$2
 
   # List folders under the organization
   folders=$(gcloud resource-manager folders list --organization="$organization_id" --format="value(name, displayName)")
@@ -68,9 +69,10 @@ list_folders() {
     if [[ -n "$folder_id" && -n "$folder_name" ]]; then
       folder_names["$folder_id"]="$folder_name"
       parent_folders["$folder_id"]=""
-      echo "$folder_name"
+      local prefix=$(printf '%*s' $((depth * 4)) '')
+      echo "${prefix}$folder_name"
       # Recursively list projects in each folder
-      list_projects "$folder_id" 1
+      list_projects "$folder_id" $((depth + 1))
     fi
   done <<< "$folders"
 
@@ -79,12 +81,21 @@ list_folders() {
 
   for project in $projects_without_parent; do
     # Print the project without a parent folder
-    echo "$project"
+    local prefix=$(printf '%*s' $((depth * 4)) '')
+    echo "${prefix}$project"
   done
 }
 
-# The organization ID
-ORGANIZATION_ID=$(gcloud organizations list --format="value(ID)")
+# Function to list all organizations and their folders/projects
+list_all_organizations() {
+  # Get all organization IDs
+  organizations=$(gcloud organizations list --format="value(ID)")
 
-# Start listing folders and projects from the organization
-list_folders "$ORGANIZATION_ID"
+  for organization_id in $organizations; do
+    echo "Organization: $organization_id"
+    list_folders "$organization_id" 1
+  done
+}
+
+# Start listing folders and projects from all organizations
+list_all_organizations
