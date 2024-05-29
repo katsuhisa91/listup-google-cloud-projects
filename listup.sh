@@ -22,18 +22,24 @@ build_full_path() {
   echo "$path"
 }
 
+# Function to print the project and its parent folders in a tree format
+print_tree() {
+  local prefix=$1
+  local project_name=$2
+  echo "${prefix}└── $project_name"
+}
+
 # Function to list projects recursively
 list_projects() {
   local parent_folder=$1
+  local depth=$2
 
   # List projects under the given folder
   projects=$(gcloud projects list --filter="parent.id=$parent_folder" --format="value(projectId)")
 
   for project in $projects; do
-    # Build the full path for the project
-    local path=$(build_full_path "$parent_folder")
-    # Print the project with full path
-    echo "$path > $project"
+    local prefix=$(printf '%*s' $((depth * 4)) '')
+    print_tree "$prefix" "$project"
   done
 
   # List subfolders under the given folder
@@ -43,8 +49,10 @@ list_projects() {
     if [[ -n "$folder_id" && -n "$folder_name" ]]; then
       folder_names["$folder_id"]="$folder_name"
       parent_folders["$folder_id"]="$parent_folder"
+      local prefix=$(printf '%*s' $((depth * 4)) '')
+      echo "${prefix}├── $folder_name"
       # Recursively list projects in subfolders
-      list_projects "$folder_id"
+      list_projects "$folder_id" $((depth + 1))
     fi
   done <<< "$subfolders"
 }
@@ -60,8 +68,9 @@ list_folders() {
     if [[ -n "$folder_id" && -n "$folder_name" ]]; then
       folder_names["$folder_id"]="$folder_name"
       parent_folders["$folder_id"]=""
+      echo "$folder_name"
       # Recursively list projects in each folder
-      list_projects "$folder_id"
+      list_projects "$folder_id" 1
     fi
   done <<< "$folders"
 
