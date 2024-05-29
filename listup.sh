@@ -32,6 +32,14 @@ list_folders() {
     # Recursively list projects in each folder
     list_projects "$folder"
   done
+
+  # List projects without a parent folder under the organization
+  projects_without_parent=$(gcloud projects list --filter="parent.type=organization AND parent.id=$organization_id" --format="value(projectId)")
+
+  for project in $projects_without_parent; do
+    # Print the project
+    echo "$project"
+  done
 }
 
 # The organization ID
